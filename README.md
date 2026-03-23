@@ -156,9 +156,3 @@ Este projeto está licenciado sob a **MIT License**.
 
 Contribuições são bem-vindas!
 Sinta-se à vontade para abrir issues ou pull requests.
-
----
-
-Se quiser, posso dar um próximo passo contigo:
-👉 melhorar ainda mais (nível open source forte, com badges, screenshots e UX polish)
-👉 ou revisar o código do `autowall.py` pra alinhar com esse nível de README

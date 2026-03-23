@@ -1,7 +1,3 @@
-Segue uma versão **reescrita, mais profissional e pronta para GitHub**, mantendo sua ideia original, mas com melhor estrutura, clareza e credibilidade:
-
----
-
 # 🔥 AutoWall
 
 Gerenciador de regras de Firewall para Windows com interface gráfica, focado em **liberar portas TCP/UDP de forma rápida, padronizada e segura**.

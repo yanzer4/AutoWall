@@ -37,6 +37,8 @@ Criar regras manualmente no Windows Firewall pode ser repetitivo e propenso a er
 
 O AutoWall utiliza comandos do PowerShell (`New-NetFirewallRule`) para criar automaticamente regras de entrada e saída no Windows Firewall.
 
+As 4 regras são criadas em uma única execução silenciosa do PowerShell, sem abrir janelas adicionais no sistema.
+
 As regras são criadas com os seguintes perfis:
 
 * Domain
@@ -65,7 +67,8 @@ O processo garante padronização e evita erros comuns na criação manual de re
 
 ## 💻 Requisitos
 
-* Windows 10 ou Windows 11
+* Windows 8 / 8.1, Windows 10 ou Windows 11
+* Windows Server 2012 ou superior
 * PowerShell disponível no sistema
 * Permissão de administrador
 

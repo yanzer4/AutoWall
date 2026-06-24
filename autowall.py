@@ -34,16 +34,17 @@ def is_admin():
 # =============================
 # EXECUTA COMANDO POWERSHELL
 # =============================
-def run_powershell(command: str):
+def run_powershell(script: str):
     result = subprocess.run(
-        ["powershell", "-Command", command],
+        ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
         capture_output=True,
-        text=True
+        text=True,
+        creationflags=subprocess.CREATE_NO_WINDOW,
     )
-    error_output = (result.stderr or "").strip()
-    if not error_output:
-        error_output = (result.stdout or "").strip()
-    return result.returncode, error_output
+    output = (result.stdout or "").strip()
+    if not output:
+        output = (result.stderr or "").strip()
+    return result.returncode, output
 
 
 def is_valid_rule_char(char: str) -> bool:
@@ -198,32 +199,43 @@ def create_firewall_rules():
         ("UDP Saída", "Outbound", "UDP", "UDP_OUT"),
     ]
 
-    rules = []
+    SEP = "|||"
+    script_lines = ["$errs = @()"]
+
     for label, direction, protocol, suffix in rule_specs:
         display_name = f"{rule_name_display} - {label}"
         internal_name = f"AUTOWALL_{rule_name_internal}_{suffix}"
-        command = (
+        cmd = (
             f'New-NetFirewallRule -Name "{internal_name}" '
             f'-DisplayName "{display_name}" '
             f'-Direction {direction} -Protocol {protocol} '
             f'-LocalPort {local_ports} -Action Allow -Profile {PROFILES} '
             f'-ErrorAction Stop'
         )
-        rules.append((display_name, command))
+        script_lines.append(
+            f'try {{ {cmd} }}'
+            f' catch {{ $errs += "{display_name}{SEP}$($_.Exception.Message)" }}'
+        )
 
-    errors = []
+    script_lines.append('if ($errs.Count -gt 0) { $errs -join [char]10; exit 1 }')
 
-    for display_name, rule in rules:
-        code, err = run_powershell(rule)
-        if code != 0:
-            detail = err if err else "Erro desconhecido."
-            errors.append(f"{display_name}: {detail}")
+    code, output = run_powershell("\n".join(script_lines))
 
-    if errors:
+    if code != 0:
+        errors = []
+        for line in output.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            if SEP in line:
+                name, detail = line.split(SEP, 1)
+                errors.append(f"{name}: {detail}")
+            else:
+                errors.append(line)
         messagebox.showerror(
             "Erro ao criar regras",
             "Algumas regras não puderam ser criadas:\n\n" +
-            "\n".join(errors)
+            "\n".join(errors or [output or "Erro desconhecido."])
         )
     else:
         messagebox.showinfo(

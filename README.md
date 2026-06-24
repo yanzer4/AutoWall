@@ -109,6 +109,12 @@ python autowall.py
 
 O projeto inclui arquivo `.spec` para builds reproduzíveis.
 
+### Build com o .spec (recomendado):
+
+```bash
+pyinstaller AutoWall.spec --noconfirm
+```
+
 ### Build rápido:
 
 ```bash
@@ -120,6 +126,40 @@ venv\Scripts\pyinstaller.exe --noconfirm --clean --onefile --windowed --name Aut
 ```
 dist/AutoWall.exe
 ```
+
+---
+
+## 📦 Instalador
+
+O projeto inclui um script **Inno Setup** (`installer.iss`) para gerar um instalador Windows completo.
+
+### Pré-requisitos
+
+* [Inno Setup 6](https://jrsoftware.org/isdl.php)
+
+### Gerar o instalador
+
+```bash
+# 1. Gere o executável primeiro
+pyinstaller AutoWall.spec --noconfirm
+
+# 2. Compile o instalador
+"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+```
+
+**Saída:**
+
+```
+installer_output/AutoWall_Setup_v1.0.0.exe
+```
+
+O instalador:
+
+* Instala em `C:\PlaylistTools\AutoWall` por padrão
+* Cria atalho no Menu Iniciar
+* Cria atalho na Área de Trabalho (opcional)
+* Registra o desinstalador no Painel de Controle
+* Suporte a português (BR) e inglês
 
 ---
 
@@ -135,7 +175,10 @@ dist/AutoWall.exe
 
 ```
 autowall.py        # Código principal
-AutoWall.spec      # Configuração de build
+AutoWall.spec      # Configuração de build (PyInstaller)
+installer.iss      # Script do instalador (Inno Setup)
+autowall.ico       # Ícone do aplicativo
+LICENSE.txt        # Licença
 .gitignore         # Arquivos ignorados
 ```
 

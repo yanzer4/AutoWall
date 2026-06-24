@@ -10,7 +10,7 @@ import customtkinter as ctk
 # CONFIGURAÇÕES FIXAS DO APP
 # =============================
 PROFILES = "Domain,Private,Public"
-APP_TITLE = "AUTOWALL - Gerenciador de Firewall"
+APP_TITLE = "AUTOWALL - Criador de Firewall"
 MAX_INTERNAL_BASE_LEN = 32
 MIN_PORT = 1
 MAX_PORT = 65535

@@ -1,0 +1,10 @@
+AutoWall - Gerenciador de Regras de Firewall para Windows
+Copyright (c) 2024 PlaylistTools
+
+Este software é fornecido "como está", sem garantias de qualquer tipo,
+expressas ou implícitas. O uso é por conta e risco do usuário.
+
+O AutoWall modifica regras do Firewall do Windows. Certifique-se de
+compreender as regras criadas antes de aplicá-las em ambientes de produção.
+
+Redistribuição permitida desde que mantida esta nota de copyright.

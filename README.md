@@ -21,6 +21,13 @@ Criar regras manualmente no Windows Firewall pode ser repetitivo e propenso a er
   * Intervalo: `3030-3040`
   * Múltiplas entradas: `8080,8443,3030-3040`
 
+* **Atalho de 1 clique** para a faixa padrão da empresa:
+
+  * Botão **"⚡ Liberar PORTAS PLAYLIST (3030-3040)"** cria as regras
+    automaticamente, sem precisar digitar nome ou portas
+  * O preset (nome e faixa) é configurável nas constantes
+    `COMPANY_PRESET_NAME` e `COMPANY_PRESET_PORTS` do `autowall.py`
+
 * Validação de entrada:
 
   * Verifica formato das portas
@@ -79,11 +86,15 @@ O processo garante padronização e evita erros comuns na criação manual de re
 1. Acesse a aba **Releases** do repositório
 2. Baixe o arquivo `AutoWall.exe`
 3. Execute o arquivo e aceite o prompt de administrador (UAC)
-4. Preencha:
+4. Escolha uma das opções:
 
-   * Nome base da regra
-   * Porta(s) (ex: `8080,8443,3030-3040`)
-5. Clique em **Criar regras no Firewall**
+   **Manual:**
+   * Preencha o **Nome base da regra** e a(s) **Porta(s)** (ex: `8080,8443,3030-3040`)
+   * Clique em **Criar regras no Firewall**
+
+   **Atalho da empresa:**
+   * Clique em **"⚡ Liberar PORTAS PLAYLIST (3030-3040)"** — as regras são
+     criadas na hora, com nome e faixa padrão, sem preencher nada
 
 > ⚠️ Não é necessário ter Python instalado para usar o executável.
 
@@ -109,6 +120,12 @@ python autowall.py
 
 O projeto inclui arquivo `.spec` para builds reproduzíveis.
 
+### Build com o .spec (recomendado):
+
+```bash
+pyinstaller AutoWall.spec --noconfirm
+```
+
 ### Build rápido:
 
 ```bash
@@ -120,6 +137,40 @@ venv\Scripts\pyinstaller.exe --noconfirm --clean --onefile --windowed --name Aut
 ```
 dist/AutoWall.exe
 ```
+
+---
+
+## 📦 Instalador
+
+O projeto inclui um script **Inno Setup** (`installer.iss`) para gerar um instalador Windows completo.
+
+### Pré-requisitos
+
+* [Inno Setup 6](https://jrsoftware.org/isdl.php)
+
+### Gerar o instalador
+
+```bash
+# 1. Gere o executável primeiro
+pyinstaller AutoWall.spec --noconfirm
+
+# 2. Compile o instalador
+"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+```
+
+**Saída:**
+
+```
+installer_output/AutoWall_Setup_v1.0.0.exe
+```
+
+O instalador:
+
+* Instala em `C:\PlaylistTools\AutoWall` por padrão
+* Cria atalho no Menu Iniciar
+* Cria atalho na Área de Trabalho (opcional)
+* Registra o desinstalador no Painel de Controle
+* Suporte a português (BR) e inglês
 
 ---
 
@@ -135,9 +186,17 @@ dist/AutoWall.exe
 
 ```
 autowall.py        # Código principal
-AutoWall.spec      # Configuração de build
+AutoWall.spec      # Configuração de build (PyInstaller)
+installer.iss      # Script do instalador (Inno Setup)
+autowall.ico       # Ícone do aplicativo (janela, .exe e instalador)
+autowall_logo.png  # Logo oficial (fonte do ícone)
+make_icon.py       # Gera o autowall.ico a partir do logo
+LICENSE.txt        # Licença
 .gitignore         # Arquivos ignorados
 ```
+
+> Para regenerar o ícone após trocar o logo: substitua `autowall_logo.png`
+> e rode `python make_icon.py` (requer Pillow: `pip install pillow`).
 
 ---
 

@@ -53,12 +53,24 @@ def run_powershell(script: str):
     result = subprocess.run(
         ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
         capture_output=True,
-        text=True,
         creationflags=subprocess.CREATE_NO_WINDOW,
     )
-    output = (result.stdout or "").strip()
+
+    # A saída do PowerShell (redirecionada) vem no codepage OEM do console
+    # (cp850 no Windows PT-BR). Decodificar errado corrompia acentos
+    # (ex.: "Não é possível" virava "NÆo , poss¡vel").
+    def decode(data: bytes) -> str:
+        if not data:
+            return ""
+        try:
+            oem = f"cp{ctypes.windll.kernel32.GetOEMCP()}"
+            return data.decode(oem)
+        except (LookupError, UnicodeDecodeError):
+            return data.decode("utf-8", errors="replace")
+
+    output = decode(result.stdout).strip()
     if not output:
-        output = (result.stderr or "").strip()
+        output = decode(result.stderr).strip()
     return result.returncode, output
 
 
@@ -153,6 +165,22 @@ def sanitize_internal_base_name(value: str) -> str:
     return cleaned[:MAX_INTERNAL_BASE_LEN]
 
 # =============================
+# VERIFICA REGRAS JÁ EXISTENTES
+# =============================
+def check_existing_rules(internal_names: list[str]) -> list[str]:
+    names_ps = ",".join(f'"{n}"' for n in internal_names)
+    script = (
+        f"$names = @({names_ps})\n"
+        "foreach ($n in $names) {\n"
+        "  if (Get-NetFirewallRule -Name $n -ErrorAction SilentlyContinue) { $n }\n"
+        "}"
+    )
+    code, output = run_powershell(script)
+    if code != 0:
+        return []
+    return [line.strip() for line in output.splitlines() if line.strip()]
+
+# =============================
 # CRIA AS REGRAS DE FIREWALL
 # =============================
 def create_firewall_rules(rule_name_raw: str, ports_raw: str):
@@ -211,12 +239,28 @@ def create_firewall_rules(rule_name_raw: str, ports_raw: str):
         ("UDP Saída", "Outbound", "UDP", "UDP_OUT"),
     ]
 
+    internal_names = [
+        f"AUTOWALL_{rule_name_internal}_{suffix}"
+        for _, _, _, suffix in rule_specs
+    ]
+
+    # Se já existirem regras com esse nome, pergunta se deve recriar.
+    overwrite = False
+    if check_existing_rules(internal_names):
+        recreate = messagebox.askyesno(
+            "Regras já existem",
+            f'Já existem regras para "{rule_name_display}" no Firewall.\n\n'
+            "Deseja recriá-las (remover as antigas e criar de novo)?"
+        )
+        if not recreate:
+            return
+        overwrite = True
+
     SEP = "|||"
     script_lines = ["$errs = @()"]
 
-    for label, direction, protocol, suffix in rule_specs:
+    for (label, direction, protocol, suffix), internal_name in zip(rule_specs, internal_names):
         display_name = f"{rule_name_display} - {label}"
-        internal_name = f"AUTOWALL_{rule_name_internal}_{suffix}"
         cmd = (
             f'New-NetFirewallRule -Name "{internal_name}" '
             f'-DisplayName "{display_name}" '
@@ -224,6 +268,11 @@ def create_firewall_rules(rule_name_raw: str, ports_raw: str):
             f'-LocalPort {local_ports} -Action Allow -Profile {PROFILES} '
             f'-ErrorAction Stop'
         )
+        if overwrite:
+            cmd = (
+                f'Remove-NetFirewallRule -Name "{internal_name}" '
+                f'-ErrorAction SilentlyContinue; ' + cmd
+            )
         script_lines.append(
             f'try {{ {cmd} }}'
             f' catch {{ $errs += "{display_name}{SEP}$($_.Exception.Message)" }}'
@@ -250,9 +299,10 @@ def create_firewall_rules(rule_name_raw: str, ports_raw: str):
             "\n".join(errors or [output or "Erro desconhecido."])
         )
     else:
+        acao = "recriadas" if overwrite else "criadas"
         messagebox.showinfo(
             "Sucesso",
-            "Regras TCP e UDP criadas com sucesso!\n\n"
+            f"Regras TCP e UDP {acao} com sucesso!\n\n"
             f"Nome base aplicado: {rule_name_display}\n"
             f"Porta(s): {local_ports}"
         )

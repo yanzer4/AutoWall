@@ -1,26 +1,23 @@
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 
-sizes = [16, 32, 48, 256]
-images = []
+# Gera autowall.ico a partir do logo oficial (autowall_logo.png).
+SOURCE = 'autowall_logo.png'
+sizes = [16, 24, 32, 48, 64, 128, 256]
 
-for size in sizes:
-    img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-    margin = size // 8
-    draw.ellipse([margin, margin, size - margin, size - margin], fill=(15, 118, 110, 255))
-    font_size = max(size // 3, 8)
-    try:
-        font = ImageFont.truetype('C:/Windows/Fonts/arialbd.ttf', font_size)
-    except Exception:
-        font = ImageFont.load_default()
-    text = 'AW'
-    bbox = draw.textbbox((0, 0), text, font=font)
-    tw = bbox[2] - bbox[0]
-    th = bbox[3] - bbox[1]
-    x = (size - tw) // 2
-    y = (size - th) // 2
-    draw.text((x, y), text, fill=(255, 255, 255, 255), font=font)
-    images.append(img)
+logo = Image.open(SOURCE).convert('RGBA')
 
-images[0].save('autowall.ico', format='ICO', sizes=[(s, s) for s in sizes], append_images=images[1:])
+# Garante que a imagem seja quadrada, mantendo o logo centralizado.
+w, h = logo.size
+side = max(w, h)
+square = Image.new('RGBA', (side, side), (0, 0, 0, 0))
+square.paste(logo, ((side - w) // 2, (side - h) // 2), logo)
+
+images = [square.resize((s, s), Image.LANCZOS) for s in sizes]
+
+images[-1].save(
+    'autowall.ico',
+    format='ICO',
+    sizes=[(s, s) for s in sizes],
+    append_images=images[:-1],
+)
 print('Icone criado: autowall.ico')

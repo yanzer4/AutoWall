@@ -5,7 +5,7 @@ a = Analysis(
     ['autowall.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('autowall.ico', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
